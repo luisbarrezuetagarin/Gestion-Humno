@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Evaluación de Empleados</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style id="app-style">
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --success-color: #4caf50;
+      --warning-color: #ff9800;
+      --danger-color: #f44336;
+      --info-color: #2196f3;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fb;
+    }
+    
+    .login-container {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0795B6 100%, #0795B6 100%);
+    }
+    
+    .login-card {
+      max-width: 400px;
+      width: 100%;
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+    
+    .login-header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+    
+    .login-header img {
+      width: 300px;
+      margin-bottom: 15px;
+    }
+    
+    .login-form {
+      padding: 0 30px 30px;
+    }
+    
+    .sidebar {
+      background-color: #0795B6;
+      min-height: 100vh;
+      transition: all 0.3s;
+    }
+    
+    .sidebar .nav-link {
+      color: rgb(255, 255, 255);
+      border-radius: 5px;
+      margin: 5px 15px;
+      transition: all 0.3s;
+    }
+    
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+      color: rgb(255, 255, 255);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar .nav-link i {
+      margin-right: 10px;
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+    
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    .rating-icon {
+      cursor: pointer;
+      margin: 0 2px;
+      font-size: 1.2em;
+      opacity: 0.7;
+      transition: opacity 0.2s, transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5em;
+      height: 1.5em;
+      position: relative;
+      border-radius: 50%;
+      /* Add these new properties for centered icons on colored backgrounds */
+      color: white;
+      text-align: center;
+    }
+    
+    .rating-icon.selected {
+      opacity: 1;
+      transform: scale(1.1);
+      /* Highlight selected icon */
+      box-shadow: 0 0 0 2px #007bff33;
+    }
+    
+    .rating-icon.confirmed {
+      border: 2px solid #000;
+      border-radius: 50%;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    
+    .rating-green {
+      background-color: var(--success-color);
+    }
+    
+    .rating-yellow {
+      background-color: var(--warning-color);
+    }
+    
+    .rating-red {
+      background-color: var(--danger-color);
+    }
+    
+    .rating-blue {
+      background-color: var(--info-color);
+    }
+    
+    .rating-gray {
+      background-color: #adb5bd;
+    }
+    
+    #chart-container {
+      height: 300px;
+      margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: fixed;
+        z-index: 999;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .toggle-sidebar {
+        display: block !important;
+      }
+      
+      .close-sidebar {
+        display: block !important;
+      }
+      
+      /* New mobile optimizations for user management */
+      #usuarios-section .card {
+        width: 100%;
+        overflow-x: auto;
+      }
+      #usuarios-section .table th,
+      #usuarios-section .table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+      #usuarios-section .d-flex {
+        flex-direction: column;
+      }
+      #usuarios-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      #usuarios-section #add-user-btn {
+        align-self: flex-start;
+        margin-bottom: 1rem;
+      }
+      
+      /* Modal adjustments for mobile */
+      .modal-dialog {
+        margin: 0.5rem;
+      }
+      .modal-body {
+        padding: 1rem;
+      }
+      
+      /* Make sure action buttons don't overflow */
+      #users-table .btn-sm {
+        padding: 0.25rem 0.4rem;
+        margin-right: 0.25rem;
+      }
+      
+      #chart-container {
+        height: 250px; /* Slightly smaller on mobile */
+      }
+    }
+</style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="https://i.ibb.co/60h27jc8/eddys-logo-png.png" alt="eddys-logo-png">
+        <h2>Sistema de Evaluación</h2>
+      </div>
+      <div class="login-form">
+        <form id="login-form">
+          <div class="mb-3">
+            <label for="username" class="form-label">Nombre de usuario</label>
+            <input type="text" class="form-control" id="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="password" required>
+            <div id="login-error" class="text-danger mt-2 d-none">Usuario o contraseña incorrectos</div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="admin-panel" class="d-flex d-none">
+    <div class="sidebar">
+      <div class="d-flex justify-content-between p-3 text-white">
+        <h3>Panel Administracion</h3>
+        <!-- Show close menu button for mobile -->
+        <button class="btn btn-sm btn-outline-light d-md-none close-sidebar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <p id="admin-username" class="px-3 text-white">Bienvenido, admin</p>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="javascript:void(0)" data-section="usuarios">
+            <i class="fas fa-users"></i> Usuarios
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" data-section="trabajadores">
+            <i class="fas fa-user-tie"></i> Trabajadores
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" data-section="reportes">
+            <i class="fas fa-chart-pie"></i> Reportes
+          </a>
+        </li>
+        <li class="nav-item mt-5">
+          <a class="nav-link" href="javascript:void(0)" id="admin-logout">
+            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="main-content">
+      <!-- Show toggle sidebar button for mobile -->
+      <button class="btn btn-sm btn-primary mb-3 toggle-sidebar d-md-none">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <!-- Usuarios Section -->
+      <div id="usuarios-section" class="section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>Gestión de Usuarios</h2>
+          <button class="btn btn-primary" id="add-user-btn">
+            <i class="fas fa-plus"></i> Crear usuario
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="users-table">
+                <thead>
+                  <tr>
+                    <th>Nombre de usuario</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- User rows will be added here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Trabajadores Section -->
+      <div id="trabajadores-section" class="section d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>Gestión de Trabajadores</h2>
+          <button class="btn btn-primary" id="add-worker-btn">
+            <i class="fas fa-plus"></i> Agregar trabajador
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="workers-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Local</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Worker rows will be added here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reportes Section -->
+      <div id="reportes-section" class="section d-none">
+        <h2 class="mb-4">Reportes de Evaluación</h2>
+        
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Usuario</label>
+            <select class="form-select" id="report-user-select">
+              <option value="">Todos los usuarios</option>
+            </select>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Rango de fechas</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="date-from" placeholder="Desde">
+              <span class="input-group-text">a</span>
+              <input type="text" class="form-control" id="date-to" placeholder="Hasta">
+            </div>
+          </div>
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Vista por</label>
+            <select class="form-select" id="report-view-select">
+              <option value="category">Categoría</option>
+              <option value="local">Local</option>
+              <option value="employee">Empleado</option>
+            </select>
+          </div>
+          
+          <div class="col-md-2 mb-3">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" id="generate-report-btn">
+              <i class="fas fa-search"></i> Generar
+            </button>
+          </div>
+        </div>
+        
+        <div class="card mt-3 d-none" id="report-results">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Resultados del reporte</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div id="report-details">
+                  <!-- Report details will go here -->
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div id="chart-container">
+                  <!-- Chart will go here -->
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4">
+              <button class="btn btn-success me-2" id="download-pdf-btn">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+              </button>
+              <button class="btn btn-success" id="download-excel-btn">
+                <i class="fas fa-file-excel"></i> Descargar Excel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evaluation Panel -->
+  <div id="eval-panel" class="d-none">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0795B6;">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="javascript:void(0)">Sistema de Evaluación</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" id="eval-username">Usuario</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" id="eval-logout">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Evaluación de Empleados</h4>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Local</label>
+              <select class="form-select" id="local-select">
+                <option value="">Seleccione un local</option>
+              </select>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Fecha</label>
+              <input type="text" class="form-control" id="eval-date">
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Día</label>
+              <select class="form-select" id="day-select" disabled>
+                <option value="lunes">Lunes</option>
+                <option value="martes">Martes</option>
+                <option value="miércoles">Miércoles</option>
+                <option value="jueves">Jueves</option>
+                <option value="viernes">Viernes</option>
+                <option value="sábado">Sábado</option>
+                <option value="domingo">Domingo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3">
+            <h5>Empleados a evaluar</h5>
+            <button class="btn btn-sm btn-primary" id="add-employee-btn" disabled>
+              <i class="fas fa-plus"></i> Agregar empleado
+            </button>
+          </div>
+          
+          <div id="employees-list" class="mb-4">
+            <div class="alert alert-info">
+              Seleccione un local para ver los empleados disponibles.
+            </div>
+          </div>
+          
+          <div class="text-center">
+            <button class="btn btn-lg btn-danger" id="submit-eval-btn" disabled>
+              Enviar evaluación
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Add/Edit User Modal -->
+  <div class="modal fade" id="user-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="user-modal-title">Crear nuevo usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="user-form">
+            <input type="hidden" id="user-id">
+            <div class="mb-3">
+              <label for="user-username" class="form-label">Nombre de usuario</label>
+              <input type="text" class="form-control" id="user-username" required>
+            </div>
+            <div class="mb-3">
+              <label for="user-password" class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="user-password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tipo de usuario</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="user-type" id="user-type-admin" value="admin">
+                <label class="form-check-label" for="user-type-admin">Administrador</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="user-type" id="user-type-evaluator" value="evaluator" checked>
+                <label class="form-check-label" for="user-type-evaluator">Evaluador</label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="save-user-btn">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Worker Modal -->
+  <div class="modal fade" id="worker-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="worker-modal-title">Agregar trabajador</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="worker-form">
+            <input type="hidden" id="worker-id">
+            <div class="mb-3">
+              <label for="worker-name" class="form-label">Nombre completo</label>
+              <input type="text" class="form-control" id="worker-name" required>
+            </div>
+            <div class="mb-3">
+              <label for="worker-local" class="form-label">Local</label>
+              <input type="text" class="form-control" id="worker-local" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="save-worker-btn">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Employee Modal -->
+  <div class="modal fade" id="add-employee-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Agregar empleado a la evaluación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="employee-search" class="form-label">Buscar empleado</label>
+            <input type="text" class="form-control" id="employee-search" placeholder="Escriba para buscar...">
+          </div>
+          <div class="list-group" id="employees-search-results">
+            <!-- Search results will appear here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="confirm-delete-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar eliminación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="confirm-delete-btn">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal fade" id="success-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Operación exitosa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center">
+            <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+            <p class="mt-3" id="success-message">La operación se ha completado con éxito.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <script id="app-script">
+  // Ensure initializeLocalStorage is defined in global scope
+  function initializeLocalStorage() {
+    if (!localStorage.getItem('users')) {
+      const defaultUsers = [
+        { id: 1, username: 'admin', password: '123', type: 'admin' },
+        { id: 2, username: 'evaluador', password: '123', type: 'evaluator' }
+      ];
+      localStorage.setItem('users', JSON.stringify(defaultUsers));
+    }
+    
+    if (!localStorage.getItem('workers')) {
+      const defaultWorkers = [
+        { id: 1, name: 'Ana Gómez', local: 'Centro Comercial' },
+        { id: 2, name: 'Benito Juárez', local: 'Centro Comercial' },
+        { id: 3, name: 'Carlos Pérez', local: 'Plaza Norte' },
+        { id: 4, name: 'Diana López', local: 'Plaza Norte' },
+        { id: 5, name: 'Eduardo Torres', local: 'Centro Histórico' }
+      ];
+      localStorage.setItem('workers', JSON.stringify(defaultWorkers));
+    }
+    
+    if (!localStorage.getItem('evaluations')) {
+      localStorage.setItem('evaluations', JSON.stringify([]));
+    }
+    
+    if (!localStorage.getItem('locals')) {
+      const defaultLocals = ['Centro Comercial', 'Plaza Norte', 'Centro Histórico'];
+      localStorage.setItem('locals', JSON.stringify(defaultLocals));
+    }
+  }
+
+  // DOM elements and variables
+  let currentUserId = null;
+  let currentUser = null;
+  let deleteItemCallback = null;
+  let editingItemId = null;
+
+  // Bootstrap components
+  const userModal = new bootstrap.Modal(document.getElementById('user-modal'));
+  const workerModal = new bootstrap.Modal(document.getElementById('worker-modal'));
+  const addEmployeeModal = new bootstrap.Modal(document.getElementById('add-employee-modal'));
+  const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirm-delete-modal'));
+  const successModal = new bootstrap.Modal(document.getElementById('success-modal'));
+
+  // Login functionality
+  // Listen for login form submission and handle authentication
+  // Show welcome message, hide login, and show appropriate panel based on user type
+  // For admin users, always redirect to the 'usuarios' section and highlight it in the sidebar
+  // For non-admin users, show the evaluation panel
+  // Show error message if login fails
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+      currentUserId = user.id;
+      currentUser = user;
+      
+      // Show welcome message when user logs in
+      showSuccessMessage(`Bienvenido, ${user.username}`);
+      
+      // Hide login, show appropriate panel
+      document.getElementById('login-screen').classList.add('d-none');
+      
+      // Check if this is the admin user specifically
+      if (user.type === 'admin') {
+        document.getElementById('admin-panel').classList.remove('d-none');
+        document.getElementById('admin-username').textContent = 'Bienvenido, ' + user.username;
+        
+        // Always redirect admin users to the "usuarios" section by default
+        document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+        document.querySelector('.sidebar .nav-link[data-section="usuarios"]').classList.add('active');
+        
+        document.querySelectorAll('.section').forEach(section => {
+          section.classList.add('d-none');
+        });
+        document.getElementById('usuarios-section').classList.remove('d-none');
+        
+        loadUserTable();
+      } else {
+        document.getElementById('eval-panel').classList.remove('d-none');
+        document.getElementById('eval-username').textContent = user.username;
+        loadLocalsForEvaluation();
+      }
+    } else {
+      document.getElementById('login-error').classList.remove('d-none');
+    }
+  });
+
+  // Admin panel - section navigation
+  // Add event listener to each sidebar menu link
+  // When a menu option is selected:
+  //   - Update active link
+  //   - Hide all sections and show the selected one
+  //   - Load section data as needed
+  //   - Close sidebar in mobile view (<= 768px) by removing 'active' from sidebar and adding 'd-none' to close button
+  document.querySelectorAll('.sidebar .nav-link[data-section]').forEach(link => {
+    link.addEventListener('click', function() {
+      // Update active link
+      document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Hide all sections and show the selected one
+      const targetSection = this.getAttribute('data-section');
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('d-none');
+      });
+      document.getElementById(targetSection + '-section').classList.remove('d-none');
+      
+      // Load section data
+      if (targetSection === 'usuarios') {
+        loadUserTable();
+      } else if (targetSection === 'trabajadores') {
+        loadWorkerTable();
+      } else if (targetSection === 'reportes') {
+        loadReportOptions();
+      }
+      
+      // Close sidebar in mobile view when a menu option is selected
+      if (window.innerWidth <= 768) {
+        document.querySelector('.sidebar').classList.remove('active');
+        document.querySelector('.close-sidebar').classList.add('d-none');
+      }
+    });
+  });
+
+  // Logout buttons
+  document.getElementById('admin-logout').addEventListener('click', logout);
+  document.getElementById('eval-logout').addEventListener('click', logout);
+
+  function logout() {
+    // Show goodbye message when user logs out
+    showSuccessMessage('Has cerrado sesión exitosamente');
+    
+    currentUserId = null;
+    currentUser = null;
+    
+    document.getElementById('admin-panel').classList.add('d-none');
+    document.getElementById('eval-panel').classList.add('d-none');
+    document.getElementById('login-screen').classList.remove('d-none');
+    
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('login-error').classList.add('d-none');
+  }
+
+  // Users management
+  document.getElementById('add-user-btn').addEventListener('click', function() {
+    document.getElementById('user-modal-title').textContent = 'Crear nuevo usuario';
+    document.getElementById('user-form').reset();
+    document.getElementById('user-id').value = '';
+    userModal.show();
+  });
+
+  document.getElementById('save-user-btn').addEventListener('click', function() {
+    const userId = document.getElementById('user-id').value;
+    const username = document.getElementById('user-username').value;
+    const password = document.getElementById('user-password').value;
+    const type = document.querySelector('input[name="user-type"]:checked').value;
+    
+    if (!username || !password) {
+      alert('Por favor complete todos los campos');
+      return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    
+    if (userId) {
+      // Edit existing user
+      const userIndex = users.findIndex(u => u.id === parseInt(userId));
+      if (userIndex !== -1) {
+        users[userIndex].username = username;
+        users[userIndex].password = password;
+        users[userIndex].type = type;
+      }
+    } else {
+      // Create new user
+      const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      users.push({ id: newId, username, password, type });
+    }
+    
+    localStorage.setItem('users', JSON.stringify(users));
+    userModal.hide();
+    loadUserTable();
+    
+    if (userId) {
+      showSuccessMessage('Usuario actualizado exitosamente');
+    } else {
+      showSuccessMessage('Nuevo usuario creado exitosamente');
+    }
+  });
+
+  function loadUserTable() {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const tableBody = document.querySelector('#users-table tbody');
+    
+    tableBody.innerHTML = '';
+    
+    users.forEach(user => {
+      const row = document.createElement('tr');
+      
+      const typeLabel = user.type === 'admin' 
+        ? '<span class="badge bg-danger">Administrador</span>' 
+        : '<span class="badge bg-info">Evaluador</span>';
+      
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${typeLabel}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary edit-user-btn" data-id="${user.id}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger delete-user-btn" data-id="${user.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+    
+    // Add event listeners for edit and delete buttons
+    document.querySelectorAll('.edit-user-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const userId = parseInt(this.getAttribute('data-id'));
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+          document.getElementById('user-modal-title').textContent = 'Editar usuario';
+          document.getElementById('user-id').value = user.id;
+          document.getElementById('user-username').value = user.username;
+          document.getElementById('user-password').value = user.password;
+          
+          if (user.type === 'admin') {
+            document.getElementById('user-type-admin').checked = true;
+          } else {
+            document.getElementById('user-type-evaluator').checked = true;
+          }
+          
+          userModal.show();
+        }
+      });
+    });
+    
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const userId = parseInt(this.getAttribute('data-id'));
+        deleteItemCallback = () => deleteUser(userId);
+        confirmDeleteModal.show();
+      });
+    });
+  }
+
+  function deleteUser(userId) {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find(u => u.id === userId);
+    const username = user ? user.username : 'Usuario';
+    
+    const filteredUsers = users.filter(u => u.id !== userId);
+    localStorage.setItem('users', JSON.stringify(filteredUsers));
+    loadUserTable();
+    showSuccessMessage(`Usuario ${username} eliminado exitosamente`);
+  }
+
+  // Workers management
+  document.getElementById('add-worker-btn').addEventListener('click', function() {
+    document.getElementById('worker-modal-title').textContent = 'Agregar trabajador';
+    document.getElementById('worker-form').reset();
+    document.getElementById('worker-id').value = '';
+    workerModal.show();
+  });
+
+  document.getElementById('save-worker-btn').addEventListener('click', function() {
+    const workerId = document.getElementById('worker-id').value;
+    const name = document.getElementById('worker-name').value;
+    const local = document.getElementById('worker-local').value;
+    
+    if (!name || !local) {
+      alert('Por favor complete todos los campos');
+      return;
+    }
+    
+    const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    
+    if (workerId) {
+      // Edit existing worker
+      const workerIndex = workers.findIndex(w => w.id === parseInt(workerId));
+      if (workerIndex !== -1) {
+        workers[workerIndex].name = name;
+        workers[workerIndex].local = local;
+      }
+    } else {
+      // Create new worker
+      const newId = workers.length ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+      workers.push({ id: newId, name, local });
+    }
+    
+    // Update locals list if needed
+    const locals = JSON.parse(localStorage.getItem('locals') || '[]');
+    if (!locals.includes(local)) {
+      locals.push(local);
+      localStorage.setItem('locals', JSON.stringify(locals));
+    }
+    
+    localStorage.setItem('workers', JSON.stringify(workers));
+    workerModal.hide();
+    loadWorkerTable();
+    
+    if (workerId) {
+      showSuccessMessage('Trabajador actualizado exitosamente');
+    } else {
+      showSuccessMessage('Nuevo trabajador agregado exitosamente');
+    }
+  });
+
+  function loadWorkerTable() {
+    const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    // Sort workers alphabetically by name
+    workers.sort((a, b) => a.name.localeCompare(b.name));
+    
+    const tableBody = document.querySelector('#workers-table tbody');
+    tableBody.innerHTML = '';
+    
+    workers.forEach(worker => {
+      const row = document.createElement('tr');
+      
+      row.innerHTML = `
+        <td>${worker.name}</td>
+        <td>${worker.local}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary edit-worker-btn" data-id="${worker.id}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger delete-worker-btn" data-id="${worker.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+    
+    // Add event listeners for edit and delete buttons
+    document.querySelectorAll('.edit-worker-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const workerId = parseInt(this.getAttribute('data-id'));
+        const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+        const worker = workers.find(w => w.id === workerId);
+        
+        if (worker) {
+          document.getElementById('worker-modal-title').textContent = 'Editar trabajador';
+          document.getElementById('worker-id').value = worker.id;
+          document.getElementById('worker-name').value = worker.name;
+          document.getElementById('worker-local').value = worker.local;
+          
+          workerModal.show();
+        }
+      });
+    });
+    
+    document.querySelectorAll('.delete-worker-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const workerId = parseInt(this.getAttribute('data-id'));
+        deleteItemCallback = () => deleteWorker(workerId);
+        confirmDeleteModal.show();
+      });
+    });
+  }
+
+  function deleteWorker(workerId) {
+    const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    const worker = workers.find(w => w.id === workerId);
+    const workerName = worker ? worker.name : 'Trabajador';
+    
+    const filteredWorkers = workers.filter(w => w.id !== workerId);
+    localStorage.setItem('workers', JSON.stringify(filteredWorkers));
+    loadWorkerTable();
+    showSuccessMessage(`Trabajador ${workerName} eliminado exitosamente`);
+  }
+
+  // Reports
+  function loadReportOptions() {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const userSelect = document.getElementById('report-user-select');
+    
+    userSelect.innerHTML = '<option value="">Todos los usuarios</option>';
+    
+    users.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.id;
+      option.textContent = user.username;
+      userSelect.appendChild(option);
+    });
+    
+    // Initialize date pickers
+    flatpickr("#date-from", {
+      locale: "es",
+      dateFormat: "Y-m-d"
+    });
+    
+    flatpickr("#date-to", {
+      locale: "es",
+      dateFormat: "Y-m-d"
+    });
+    
+    // Add event listeners to filter inputs to automatically update chart
+    document.getElementById('report-user-select').addEventListener('change', updateReportChart);
+    document.getElementById('date-from').addEventListener('change', updateReportChart);
+    document.getElementById('date-to').addEventListener('change', updateReportChart);
+    document.getElementById('report-view-select').addEventListener('change', updateReportChart);
+  }
+
+  function updateReportChart() {
+    // Get current filter values
+    const userId = document.getElementById('report-user-select').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+    const viewType = document.getElementById('report-view-select').value;
+    
+    // Only update if report results are visible
+    if (document.getElementById('report-results').classList.contains('d-none')) {
+      return;
+    }
+    
+    // Calculate new data based on filters (using sample data for now)
+    // In a real app, this would query the actual evaluation data
+    let chartData = [70, 15, 7, 3, 5]; // Default values
+    
+    // Example of how the data might change based on filters
+    if (viewType === 'local') {
+      chartData = [65, 20, 5, 5, 5];
+    } else if (viewType === 'employee') {
+      chartData = [75, 10, 8, 2, 5];
+    }
+    
+    // If a specific user is selected, slightly adjust the data
+    if (userId) {
+      chartData = chartData.map(val => Math.min(100, val + Math.floor(Math.random() * 10) - 5));
+    }
+    
+    // Update the chart
+    if (window.reportChart) {
+      window.reportChart.destroy();
+    }
+    
+    const ctx = document.getElementById('chart-container');
+    window.reportChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Excelente', 'Por mejorar', 'Grave', 'Libre', 'Falta'],
+        datasets: [{
+          label: 'Distribución de evaluaciones',
+          data: chartData,
+          backgroundColor: [
+            getComputedStyle(document.documentElement).getPropertyValue('--success-color'),
+            getComputedStyle(document.documentElement).getPropertyValue('--warning-color'),
+            getComputedStyle(document.documentElement).getPropertyValue('--danger-color'),
+            getComputedStyle(document.documentElement).getPropertyValue('--info-color'),
+            '#adb5bd'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  document.getElementById('generate-report-btn').addEventListener('click', function() {
+    const userId = document.getElementById('report-user-select').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+    const viewType = document.getElementById('report-view-select').value;
+    
+    // Show report results section
+    document.getElementById('report-results').classList.remove('d-none');
+    
+    // Display some sample data for the prototype
+    const reportDetails = document.getElementById('report-details');
+    reportDetails.innerHTML = `
+      <h5>Resumen de evaluaciones</h5>
+      <p><strong>Período:</strong> ${dateFrom || 'Inicio'} al ${dateTo || 'Hoy'}</p>
+      <p><strong>Usuario:</strong> ${userId ? document.getElementById('report-user-select').options[document.getElementById('report-user-select').selectedIndex].text : 'Todos'}</p>
+      <p><strong>Vista por:</strong> ${viewType === 'category' ? 'Categoría' : viewType === 'local' ? 'Local' : 'Empleado'}</p>
+      
+      <div class="mt-3">
+        <h6>Detalles</h6>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>${viewType === 'category' ? 'Categoría' : viewType === 'local' ? 'Local' : 'Empleado'}</th>
+                <th>Excelente</th>
+                <th>Por mejorar</th>
+                <th>Grave</th>
+                <th>Libre</th>
+                <th>Falta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${viewType === 'category' ? 'Uniforme' : viewType === 'local' ? 'Centro Comercial' : 'Ana Gómez'}</td>
+                <td>75%</td>
+                <td>15%</td>
+                <td>5%</td>
+                <td>0%</td>
+                <td>5%</td>
+              </tr>
+              <tr>
+                <td>${viewType === 'category' ? 'Sonrisa' : viewType === 'local' ? 'Plaza Norte' : 'Benito Juárez'}</td>
+                <td>60%</td>
+                <td>25%</td>
+                <td>10%</td>
+                <td>0%</td>
+                <td>5%</td>
+              </tr>
+              <tr>
+                <td>${viewType === 'category' ? 'Puntualidad' : viewType === 'local' ? 'Centro Histórico' : 'Carlos Pérez'}</td>
+                <td>80%</td>
+                <td>10%</td>
+                <td>5%</td>
+                <td>0%</td>
+                <td>5%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    // Update the chart with the current filter values
+    updateReportChart();
+  });
+
+  document.getElementById('download-pdf-btn').addEventListener('click', function() {
+    // Get report details and create PDF
+    const reportDetails = document.getElementById('report-details');
+    const title = reportDetails.querySelector('h5').textContent;
+    const period = reportDetails.querySelector('p:nth-child(2)').textContent;
+    const user = reportDetails.querySelector('p:nth-child(3)').textContent;
+    const viewType = reportDetails.querySelector('p:nth-child(4)').textContent;
+    
+    // Initialize jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Add content to PDF
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    
+    doc.setFontSize(12);
+    doc.text(period, 14, 32);
+    doc.text(user, 14, 40);
+    doc.text(viewType, 14, 48);
+    
+    // Add table data
+    const table = reportDetails.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+    
+    doc.setFontSize(14);
+    doc.text('Detalles', 14, 60);
+    
+    // Create table in PDF
+    const tableData = [];
+    tableData.push(headers);
+    
+    rows.forEach(row => {
+      const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent);
+      tableData.push(rowData);
+    });
+    
+    doc.autoTable({
+      startY: 65,
+      head: [headers],
+      body: Array.from(rows).map(row => 
+        Array.from(row.querySelectorAll('td')).map(td => td.textContent)
+      )
+    });
+    
+    // Save the PDF
+    doc.save('reporte_evaluacion.pdf');
+    
+    showSuccessMessage('Reporte PDF descargado exitosamente');
+  });
+
+  document.getElementById('download-excel-btn').addEventListener('click', function() {
+    // Get report data
+    const reportDetails = document.getElementById('report-details');
+    const title = reportDetails.querySelector('h5').textContent;
+    const period = reportDetails.querySelector('p:nth-child(2)').textContent;
+    const user = reportDetails.querySelector('p:nth-child(3)').textContent;
+    const viewType = reportDetails.querySelector('p:nth-child(4)').textContent;
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Create summary worksheet
+    const summaryData = [
+      [title],
+      [period],
+      [user],
+      [viewType],
+      [],  // Empty row
+      ['Detalles']
+    ];
+    
+    // Get table data
+    const table = reportDetails.querySelector('table');
+    const headerRow = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+    summaryData.push(headerRow);
+    
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent);
+      summaryData.push(rowData);
+    });
+    
+    // Create worksheet and add to workbook
+    const ws = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Reporte de Evaluación');
+    
+    // Generate Excel file and trigger download
+    XLSX.writeFile(wb, 'reporte_evaluacion.xlsx');
+    
+    showSuccessMessage('Reporte Excel descargado exitosamente');
+  });
+
+  // Evaluation panel
+  function loadLocalsForEvaluation() {
+    const locals = JSON.parse(localStorage.getItem('locals') || '[]');
+    const localSelect = document.getElementById('local-select');
+    
+    localSelect.innerHTML = '<option value="">Seleccione un local</option>';
+    
+    locals.forEach(local => {
+      const option = document.createElement('option');
+      option.value = local;
+      option.textContent = local;
+      localSelect.appendChild(option);
+    });
+    
+    // Initialize date picker with current date
+    flatpickr("#eval-date", {
+      locale: "es",
+      dateFormat: "Y-m-d",
+      defaultDate: new Date(),
+      onChange: function(selectedDates, dateStr) {
+        // Update day of week when date changes
+        const selectedDate = selectedDates[0];
+        const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        const daySelect = document.getElementById('day-select');
+        daySelect.value = days[selectedDate.getDay()];
+      }
+    });
+    
+    // Set day of week based on selected date
+    const date = new Date();
+    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const daySelect = document.getElementById('day-select');
+    daySelect.value = days[date.getDay()];
+    
+    // Event listener for local selection
+    localSelect.addEventListener('change', function() {
+      if (this.value) {
+        document.getElementById('day-select').disabled = false;
+        document.getElementById('add-employee-btn').disabled = false;
+        document.getElementById('submit-eval-btn').disabled = false;
+        loadEmployeesForEvaluation(this.value);
+      } else {
+        document.getElementById('day-select').disabled = true;
+        document.getElementById('add-employee-btn').disabled = true;
+        document.getElementById('submit-eval-btn').disabled = true;
+        document.getElementById('employees-list').innerHTML = `
+          <div class="alert alert-info">
+            Seleccione un local para ver los empleados disponibles.
+          </div>
+        `;
+      }
+    });
+  }
+
+  function loadEmployeesForEvaluation(local) {
+    const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    // Filter workers to only include those from the selected local and sort alphabetically
+    const availableWorkers = workers
+      .filter(worker => worker.local === local)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    const employeesList = document.getElementById('employees-list');
+    
+    if (availableWorkers.length === 0) {
+      employeesList.innerHTML = `
+        <div class="alert alert-warning">
+          No hay empleados registrados para este local.
+        </div>
+      `;
+      return;
+    }
+    
+    employeesList.innerHTML = '';
+    
+    const categories = [
+      'Uniforme', 'Sonrisa', 'Puntualidad', 'Asistencia', 
+      'Responsabilidad', 'Colaboración', 'Limpieza'
+    ];
+    
+    // Create a card to hold the new table layout
+    const evaluationCard = document.createElement('div');
+    evaluationCard.className = 'card mb-4';
+    
+    // Create table with categories as columns instead of rows
+    let tableHtml = `
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Empleado</th>
+                ${categories.map(category => `<th>${category}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+`;
+
+    // Generate a row for each employee with rating icons for each category
+    tableHtml += availableWorkers.map(worker => `
+      <tr data-worker-id="${worker.id}">
+        <td>${worker.name}</td>
+        ${categories.map(category => `
+          <td>
+            <div class="d-flex justify-content-center" data-worker-id="${worker.id}" data-category="${category}">
+              <span class="rating-icon rating-green" data-value="excelente" title="Excelente">
+                <i class="fas fa-check"></i>
+              </span>
+              <span class="rating-icon rating-yellow" data-value="mejorar" title="Por mejorar">
+                <i class="fas fa-exclamation"></i>
+              </span>
+              <span class="rating-icon rating-red" data-value="grave" title="Grave">
+                <i class="fas fa-times"></i>
+              </span>
+              <span class="rating-icon rating-blue" data-value="libre" title="Libre">
+                <i class="fas fa-umbrella-beach"></i>
+              </span>
+              <span class="rating-icon rating-gray" data-value="falta" title="Falta">
+                <i class="fas fa-user-times"></i>
+              </span>
+            </div>
+          </td>
+        `).join('')}
+      </tr>
+    `).join('');
+
+    tableHtml += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    evaluationCard.innerHTML = tableHtml;
+    employeesList.appendChild(evaluationCard);
+    
+    // Add event listeners for rating icons
+    document.querySelectorAll('.rating-icon').forEach(icon => {
+      icon.addEventListener('click', function() {
+        // Get the worker ID from the parent container
+        const workerId = this.closest('div[data-worker-id]').getAttribute('data-worker-id');
+        
+        // Get the category from the parent container
+        const category = this.closest('div[data-category]').getAttribute('data-category');
+        
+        // First, find the container and remove selected class from all icons in it
+        const iconContainer = this.closest('div[data-worker-id]');
+        iconContainer.querySelectorAll('.rating-icon').forEach(i => {
+          i.classList.remove('selected');
+          i.classList.remove('confirmed');
+        });
+        
+        // Mark this icon as selected
+        this.classList.add('selected');
+        
+        // Add a short delay before confirming (to show the selection animation)
+        setTimeout(() => {
+          this.classList.add('confirmed');
+          updateSubmitButtonState(); // Add this line
+        }, 200);
+      });
+    });
+    
+    // Add informative message about rating colors and their scores
+    const ratingInfoDiv = document.createElement('div');
+    ratingInfoDiv.className = 'alert alert-info mb-3';
+    ratingInfoDiv.innerHTML = '<strong>Leyenda:</strong> Verde = Excelente (1), Amarillo = Por mejorar (2), Rojo = Grave (3), Azul = Libre (1), Gris = Falta (3)';
+    employeesList.appendChild(ratingInfoDiv);
+  }
+
+  function addWorkerToEvaluationTable(worker, selectedLocal) {
+    const employeesList = document.getElementById('employees-list');
+    const categories = [
+      'Uniforme', 'Sonrisa', 'Puntualidad', 'Asistencia', 
+      'Responsabilidad', 'Colaboración', 'Limpieza'
+    ];
+    
+    // If this is the first worker being added, create the table structure
+    if (!employeesList.querySelector('table')) {
+        // Create a card to hold the new table layout
+        const evaluationCard = document.createElement('div');
+        evaluationCard.className = 'card mb-4';
+        
+        // Create table with categories as columns
+        let tableHtml = `
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Empleado</th>
+                    ${categories.map(category => `<th>${category}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        
+        evaluationCard.innerHTML = tableHtml;
+        employeesList.innerHTML = '';
+        employeesList.appendChild(evaluationCard);
+        
+        // Add informative message about rating colors and their scores
+        const ratingInfoDiv = document.createElement('div');
+        ratingInfoDiv.className = 'alert alert-info mb-3';
+        ratingInfoDiv.innerHTML = '<strong>Leyenda:</strong> Verde = Excelente (1), Amarillo = Por mejorar (2), Rojo = Grave (3), Azul = Libre (1), Gris = Falta (3)';
+        employeesList.appendChild(ratingInfoDiv);
+    }
+    
+    // Create the row for the new worker
+    const tbody = employeesList.querySelector('tbody');
+    const newRow = document.createElement('tr');
+    newRow.setAttribute('data-worker-id', worker.id);
+    
+    let rowHtml = `<td>${worker.name}</td>`;
+    
+    // Add rating columns for each category
+    categories.forEach(category => {
+        rowHtml += `
+          <td>
+            <div class="d-flex justify-content-center" data-worker-id="${worker.id}" data-category="${category}">
+              <span class="rating-icon rating-green" data-value="excelente" title="Excelente">
+                <i class="fas fa-check"></i>
+              </span>
+              <span class="rating-icon rating-yellow" data-value="mejorar" title="Por mejorar">
+                <i class="fas fa-exclamation"></i>
+              </span>
+              <span class="rating-icon rating-red" data-value="grave" title="Grave">
+                <i class="fas fa-times"></i>
+              </span>
+              <span class="rating-icon rating-blue" data-value="libre" title="Libre">
+                <i class="fas fa-umbrella-beach"></i>
+              </span>
+              <span class="rating-icon rating-gray" data-value="falta" title="Falta">
+                <i class="fas fa-user-times"></i>
+              </span>
+            </div>
+          </td>
+        `;
+    });
+    
+    newRow.innerHTML = rowHtml;
+    tbody.appendChild(newRow);
+    
+    // Add event listeners for the rating icons in the new row
+    newRow.querySelectorAll('.rating-icon').forEach(icon => {
+      icon.addEventListener('click', function() {
+        // Get the worker ID from the parent container
+        const workerId = this.closest('div[data-worker-id]').getAttribute('data-worker-id');
+        
+        // Get the category from the parent container
+        const category = this.closest('div[data-category]').getAttribute('data-category');
+        
+        // First, find the container and remove selected class from all icons in it
+        const iconContainer = this.closest('div[data-worker-id]');
+        iconContainer.querySelectorAll('.rating-icon').forEach(i => {
+          i.classList.remove('selected');
+          i.classList.remove('confirmed');
+        });
+        
+        // Mark this icon as selected
+        this.classList.add('selected');
+        
+        // Add a short delay before confirming (to show the selection animation)
+        setTimeout(() => {
+          this.classList.add('confirmed');
+          updateSubmitButtonState(); // Add this line
+        }, 200);
+      });
+    });
+    
+    // Show confirmation message when employee is added to evaluation
+    showSuccessMessage(`Empleado ${worker.name} agregado a la evaluación`);
+  }
+
+  function updateSubmitButtonState() {
+    const submitBtn = document.getElementById('submit-eval-btn');
+    const rows = document.querySelectorAll('tr[data-worker-id]');
+    let allRated = true;
+    
+    if (rows.length === 0) {
+      submitBtn.disabled = true;
+      submitBtn.classList.remove('btn-success');
+      submitBtn.classList.add('btn-danger');
+      return;
+    }
+    
+    for (const row of rows) {
+      const ratingContainers = row.querySelectorAll('div[data-category]');
+      
+      for (const container of ratingContainers) {
+        const hasSelectedRating = container.querySelector('.rating-icon.selected, .rating-icon.confirmed');
+        if (!hasSelectedRating) {
+          allRated = false;
+          break;
+        }
+      }
+      
+      if (!allRated) break;
+    }
+    
+    submitBtn.disabled = !allRated;
+    
+    // Update button color based on rating status
+    if (allRated) {
+      submitBtn.classList.remove('btn-danger');
+      submitBtn.classList.add('btn-success');
+    } else {
+      submitBtn.classList.remove('btn-success');
+      submitBtn.classList.add('btn-danger');
+    }
+  }
+
+  document.getElementById('add-employee-btn').addEventListener('click', function() {
+    const selectedLocal = document.getElementById('local-select').value;
+    if (!selectedLocal) return;
+    
+    const workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    
+    // Get the list of worker IDs already in the evaluation
+    const currentWorkerIds = Array.from(
+      document.querySelectorAll('tr[data-worker-id]')
+    ).map(th => parseInt(th.getAttribute('data-worker-id')));
+    
+    // Filter workers to only include those from the selected local and sort alphabetically
+    const availableWorkers = workers
+      .filter(worker => !currentWorkerIds.includes(worker.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    const resultsContainer = document.getElementById('employees-search-results');
+    resultsContainer.innerHTML = '';
+    
+    if (availableWorkers.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="alert alert-info mt-2">
+          No hay más empleados disponibles para agregar.
+        </div>
+      `;
+    } else {
+      availableWorkers.forEach(worker => {
+        const item = document.createElement('button');
+        item.className = 'list-group-item list-group-item-action';
+        // Show both name and local to help identify employees from different locals
+        item.textContent = `${worker.name}`;
+        item.setAttribute('data-worker-id', worker.id);
+        
+        item.addEventListener('click', function() {
+          const workerId = parseInt(this.getAttribute('data-worker-id'));
+          const worker = workers.find(w => w.id === workerId);
+          
+          if (worker) {
+            // Add this worker to the evaluation table
+            addWorkerToEvaluationTable(worker, selectedLocal);
+            addEmployeeModal.hide();
+          }
+        });
+        
+        resultsContainer.appendChild(item);
+      });
+    }
+    
+    // Setup search functionality
+    document.getElementById('employee-search').addEventListener('input', function() {
+      const searchText = this.value.toLowerCase();
+      
+      document.querySelectorAll('#employees-search-results button').forEach(item => {
+        const workerText = item.textContent.toLowerCase();
+        if (workerText.includes(searchText)) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+    
+    addEmployeeModal.show();
+  });
+
+  document.getElementById('submit-eval-btn').addEventListener('click', function() {
+    const local = document.getElementById('local-select').value;
+    const date = document.getElementById('eval-date').value;
+    const day = document.getElementById('day-select').value;
+    
+    if (!local || !date) {
+      alert('Por favor seleccione un local y una fecha');
+      return;
+    }
+    
+    // Check if all employees have ratings for all categories
+    const rows = document.querySelectorAll('tr[data-worker-id]');
+    let incompleteRatings = false;
+    let incompleteEmployee = '';
+    let incompleteCategory = '';
+    
+    for (const row of rows) {
+      const workerName = row.querySelector('td').textContent;
+      const ratingContainers = row.querySelectorAll('div[data-category]');
+      
+      for (const container of ratingContainers) {
+        const category = container.getAttribute('data-category');
+        const hasSelectedRating = container.querySelector('.rating-icon.selected, .rating-icon.confirmed');
+        
+        if (!hasSelectedRating) {
+          incompleteRatings = true;
+          incompleteEmployee = workerName;
+          incompleteCategory = category;
+          break;
+        }
+      }
+      
+      if (incompleteRatings) break;
+    }
+    
+    if (incompleteRatings) {
+      alert(`Por favor complete todas las categorías. Falta calificar "${incompleteCategory}" para ${incompleteEmployee}.`);
+      return;
+    }
+    
+    // Show success message before persisting the evaluation
+    showSuccessMessage('Evaluación enviada con éxito');
+    
+    // Collect evaluation data
+    // ... rest of code ...
+  });
+
+  // Confirm delete modal
+  document.getElementById('confirm-delete-btn').addEventListener('click', function() {
+    if (typeof deleteItemCallback === 'function') {
+      deleteItemCallback();
+      deleteItemCallback = null;
+    }
+    confirmDeleteModal.hide();
+  });
+
+  // Success message
+  function showSuccessMessage(message) {
+    document.getElementById('success-message').textContent = message;
+    successModal.show();
+  }
+
+  // Mobile responsiveness
+  // Toggle sidebar for mobile
+  // Show/hide close menu button
+  // Ensure mobile responsiveness on load and resize
+
+  document.querySelector('.toggle-sidebar').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+    document.querySelector('.close-sidebar').classList.remove('d-none');
+  });
+
+  // Add event listener for the close menu button
+  document.querySelector('.close-sidebar').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.remove('active');
+    this.classList.add('d-none');
+  });
+
+  // Check mobile view on load
+  function checkMobileView() {
+    if (window.innerWidth <= 768) {
+      document.querySelector('.toggle-sidebar').classList.remove('d-none');
+    } else {
+      document.querySelector('.toggle-sidebar').classList.add('d-none');
+      document.querySelector('.sidebar').classList.remove('active');
+    }
+  }
+
+  // Initialize the app
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeLocalStorage();
+    checkMobileView(); // Check mobile view on load
+    window.addEventListener('resize', checkMobileView); // Check on resize
+  });
+</script>
+</body>
+</html>
